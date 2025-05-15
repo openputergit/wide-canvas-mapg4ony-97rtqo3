@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Detection Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <nav class="bg-gray-800 p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">FraudGuard</h1>
+            <div class="space-x-4">
+                <button class="bg-blue-600 px-4 py-2 rounded" onclick="toggleModal('loginModal')">Login</button>
+                <button class="bg-gray-600 px-4 py-2 rounded" id="darkModeToggle">
+                    <i class="bi bi-moon-fill"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4">
+        <!-- Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gray-800 p-4 rounded-lg shadow">
+                <h3 class="text-gray-400">Total Transactions</h3>
+                <p class="text-2xl font-bold">1,234</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg shadow">
+                <h3 class="text-gray-400">Fraudulent Transactions</h3>
+                <p class="text-2xl font-bold text-red-500">23</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg shadow">
+                <h3 class="text-gray-400">Detection Accuracy</h3>
+                <p class="text-2xl font-bold text-green-500">98.5%</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg shadow">
+                <h3 class="text-gray-400">Active Alerts</h3>
+                <p class="text-2xl font-bold text-yellow-500">3</p>
+            </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow mb-6">
+            <h2 class="text-xl mb-4">Fraud Trends</h2>
+            <canvas id="fraudChart" height="100"></canvas>
+        </div>
+
+        <!-- Transaction Table -->
+        <div class="bg-gray-800 p-4 rounded-lg shadow">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl">Recent Transactions</h2>
+                <div class="flex gap-2">
+                    <input type="date" class="bg-gray-700 rounded px-3 py-2">
+                    <select class="bg-gray-700 rounded px-3 py-2">
+                        <option value="all">All Risk Levels</option>
+                        <option value="high">High Risk</option>
+                        <option value="medium">Medium Risk</option>
+                        <option value="low">Low Risk</option>
+                    </select>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-left bg-gray-700">
+                            <th class="p-3">Transaction ID</th>
+                            <th class="p-3">Timestamp</th>
+                            <th class="p-3">Amount</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3">Risk Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionTable">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+        <div class="bg-gray-800 p-6 rounded-lg w-96">
+            <h2 class="text-xl mb-4">Login</h2>
+            <input type="email" placeholder="Email" class="w-full mb-3 p-2 rounded bg-gray-700">
+            <input type="password" placeholder="Password" class="w-full mb-3 p-2 rounded bg-gray-700">
+            <button class="bg-blue-600 w-full py-2 rounded" onclick="login()">Login</button>
+            <button class="mt-2 text-gray-400" onclick="toggleModal('loginModal')">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Chart initialization
+        const ctx = document.getElementById('fraudChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Fraud Cases',
+                    data: [12, 19, 3, 5, 2, 3],
+                    borderColor: 'rgb(239, 68, 68)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { color: 'white' }
+                    },
+                    x: {
+                        ticks: { color: 'white' }
+                    }
+                }
+            }
+        });
+
+        // Dummy transaction data
+        const transactions = [
+            { id: 'TX123', timestamp: '2023-11-10 14:23', amount: '$1,234', status: 'Legitimate', risk: 12 },
+            { id: 'TX124', timestamp: '2023-11-10 14:22', amount: '$4,567', status: 'Fraud', risk: 89 },
+            { id: 'TX125', timestamp: '2023-11-10 14:21', amount: '$891', status: 'Legitimate', risk: 23 },
+        ];
+
+        // Populate transaction table
+        function populateTable() {
+            const tableBody = document.getElementById('transactionTable');
+            tableBody.innerHTML = transactions.map(tx => `
+                <tr class="border-t border-gray-700">
+                    <td class="p-3">${tx.id}</td>
+                    <td class="p-3">${tx.timestamp}</td>
+                    <td class="p-3">${tx.amount}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-1 rounded ${tx.status === 'Fraud' ? 'bg-red-500' : 'bg-green-500'}">
+                            ${tx.status}
+                        </span>
+                    </td>
+                    <td class="p-3">${tx.risk}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Modal functions
+        function toggleModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.toggle('hidden');
+        }
+
+        function login() {
+            alert('Login functionality would connect to backend here');
+            toggleModal('loginModal');
+        }
+
+        // Initialize
+        populateTable();
+
+        // Dark mode toggle
+        document.getElementById('darkModeToggle').addEventListener('click', function() {
+            document.body.classList.toggle('bg-white');
+            document.body.classList.toggle('bg-gray-900');
+        });
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
